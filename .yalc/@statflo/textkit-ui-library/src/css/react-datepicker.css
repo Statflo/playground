@@ -1,0 +1,96 @@
+@tailwind base;
+
+.react-datepicker__input-container input {
+    @apply text-sm w-full bg-transparent h-10 placeholder:text-sm focus:outline-none !important;
+}
+
+.react-datepicker__triangle {
+    @apply hidden;
+}
+
+.react-datepicker-popper {
+    transform: translate3d(0px, 32px, 0px) !important;
+}
+
+.react-datepicker-popper [data-placement^="bottom"] {
+    padding: 0;
+    width: 345px;
+}
+
+.react-datepicker-popper [data-placement^="top"] {
+    padding: 0;
+    width: 345px;
+}
+
+.react-datepicker {
+    @apply border border-gray-spacer shadow-sm !important;
+}
+
+.react-datepicker__header {
+    @apply bg-white border-b-0 text-sm font-medium leading-4 !important;
+}
+
+.react-datepicker__navigation-icon--previous::before {
+    @apply text-main-l2 mt-2 !important;
+}
+
+.react-datepicker__navigation-icon--next::before {
+    @apply text-main-l2 mt-2 !important;
+}
+
+.react-datepicker__navigation--next--with-time:not(.react-datepicker__navigation--next--with-today-button) {
+    right: 102px;
+}
+
+.react-datepicker__month-container {
+    @apply p-1 border-r border-gray-shadow !important;
+}
+
+.react-datepicker__current-month {
+    @apply text-sm font-medium text-main-default !important;
+}
+
+.react-datepicker__day-names {
+    @apply pt-2;
+}
+
+.react-datepicker__day-name {
+    @apply text-sm font-medium text-main-l2 !important;
+}
+
+.react-datepicker__time-list-item {
+    @apply flex items-center justify-center;
+}
+
+.react-datepicker__time-container {
+    @apply w-24;
+}
+
+.react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item--selected {
+    @apply bg-primary-default hover:bg-primary-active !important;
+}
+
+.react-datepicker__week {
+    @apply text-sm;
+}
+
+.react-datepicker__day--outside-month {
+    @apply text-main-l3;
+}
+
+.react-datepicker__day--selected, 
+.react-datepicker__day--keyboard-selected {
+    @apply bg-primary-default rounded-full hover:rounded-full hover:bg-primary-active !important;
+}
+
+.react-datepicker__day {
+    @apply rounded-full select-none hover:rounded-full !important;
+}
+
+.react-datepicker__time-container {
+    @apply border-none !important;
+}
+
+.react-datepicker-time__header {
+    @apply text-sm font-medium text-main-default !important;
+}

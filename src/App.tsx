@@ -1,56 +1,65 @@
 import React from 'react';
-import logo from './logo.svg';
-import { Counter } from './features/counter/Counter';
-import './App.css';
+import { useContainer } from './providers/ContainerProvider';
+import Chat from './components/Chat';
+import Main from './components/Main';
+import Navigation from './components/Nav';
+import Notifications from './components/Notifications';
+import Right from './components/Right';
+import Download from './Pages/Download';
+import Log from './Pages/Log';
+import ManageContact from './Pages/ManageContact';
+import ManageEnv from './Pages/ManageEnv';
+import ManageWidget from './Pages/ManageWidget';
+import Upload from './Pages/Upload';
 
 function App() {
+  const { page } = useContainer();
+
+  const getTitle = () => {
+    switch(page) {
+      case 'download':
+        return 'Download';
+      case 'logs':
+        return 'Logs';
+      case 'manageContacts':
+        return 'Manage Contacts';
+      case 'manageEnv':
+        return 'Manage Environments';
+      case 'manageWidgets':
+        return 'Manage Widgets';
+      case 'upload':
+        return 'Upload';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  const getPage = () => {
+    switch(page) {
+      case 'download':
+        return <Download />;
+      case 'logs':
+        return <Log />;
+      case 'manageContacts':
+        return <ManageContact />;
+      case 'manageEnv':
+        return <ManageEnv />;
+      case 'manageWidgets':
+        return <ManageWidget />;
+      case 'upload':
+        return <Upload />;
+    }
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <Counter />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <span>
-          <span>Learn </span>
-          <a
-            className="App-link"
-            href="https://reactjs.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            React
-          </a>
-          <span>, </span>
-          <a
-            className="App-link"
-            href="https://redux.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Redux
-          </a>
-          <span>, </span>
-          <a
-            className="App-link"
-            href="https://redux-toolkit.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Redux Toolkit
-          </a>
-          ,<span> and </span>
-          <a
-            className="App-link"
-            href="https://react-redux.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            React Redux
-          </a>
-        </span>
-      </header>
+    <div className="h-full flex items-stretch flex-row overflow-hidden">
+      <Navigation />
+      <Chat />
+      <Main title={getTitle()}>
+        {getPage()}
+      </Main>
+      <Right />
+      <Notifications />
     </div>
   );
 }

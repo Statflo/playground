@@ -1,0 +1,9 @@
+{
+  "version": "v1",
+  "packages": {
+    "@statflo/textkit-ui-library": {
+      "signature": "7793aa28259ef607bf43c3eab01760b2",
+      "file": true
+    }
+  }
+}
