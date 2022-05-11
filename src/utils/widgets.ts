@@ -1,5 +1,5 @@
-import { WidgetScope, WidgetType } from "@statflo/textkit-widget-events";
-import { Widget, WidgetState } from "../providers/StorageProvider";
+import { WidgetScope, WidgetType, WidgetViewSize, } from "@statflo/textkit-widget-events";
+import { Widget, WidgetPropertyState, WidgetState } from "../types";
 
 export function getEnvironmentWidgets(widgets: WidgetState, envId: string) {
     return Object.values(widgets).filter(
@@ -27,4 +27,39 @@ export function getUserActionWidget(widgets: Widget[]): Widget | null {
 
 export function getSendableWidgets(widgets: Widget[]): Widget[] {
     return widgets.filter(widget => widget.type === WidgetType.Sendable);
+}
+
+export function getTimelineMaxHeight(): number {
+    const infoHeight = document.getElementById('right-info-container')?.clientHeight;
+    const actionHeight = document.getElementById('action-menu-container')?.clientHeight;
+    return window.innerHeight - (infoHeight ?? 0) - (actionHeight ?? 0);
+}
+
+export function getSendableMaxHeight(): number {
+    const messageBar = document.getElementById('message-bar-container')?.clientHeight;
+    const height: number = window.innerHeight;
+    return height - 60 - (messageBar ?? 0) - 44;
+}
+
+export function getWidgetMaxHeight(): number {
+    const height: number = window.innerHeight;
+    return height - 60 - 44;
+}
+
+export function createWidgetPropertyState(widget: Widget): WidgetPropertyState {
+    return {
+        containerDomain: 'containerDomain',
+        footer: null,
+        header: null,
+        id: widget.id,
+        isOpen: false,
+        isReady: false,
+        isShown: false,
+        label: null,
+        maxHeight: null,
+        size: WidgetViewSize.Medium,
+        type: widget.type,
+        url: widget.url,
+        widgetDomain: widget.domain
+    }
 }

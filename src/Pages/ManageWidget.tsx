@@ -8,15 +8,20 @@ import { Button, Dropdown, FormGroup, TextInput, DropdownOption } from "@statflo
 import PageTitle from "../components/PageTitle";
 import classNames from "../utils/classnames";
 import { getEnv, getEnvList, scopeOptions, typeOptions } from '../utils/selects';
-import { useStorage } from "../providers/StorageProvider";
+import { useWidgets } from "../providers/WidgetProvider";
+import Select from "../components/Select";
+import { Widget, WidgetState } from "../types";
 
 export default function ManageWidget() {
     const [open, setOpen] = useState<boolean>(false);
+    const [filterEnv, setFilterEnv] = useState<string>('all');
+    const [filterType, setFilterType] = useState<string>('all');
+    const [filterVisible, setFilterVisible] = useState<string>('all');
     const [envList, setEnvList] = useState<DropdownOption[]>([
         { id: '0', label: 'Select Environment', value: '0' }
     ]);
     const { setNotification } = useContainer();
-    const { envs, dispatch, widgets } = useStorage();
+    const { envs, widgets, updateWidgets, deleteWidget } = useWidgets();
     const form = useFormik({
         initialValues: {
             id: '',
@@ -30,18 +35,15 @@ export default function ManageWidget() {
             enabled: true,
         },
         onSubmit: values => {
-            dispatch({ 
-                type: 'widget/register', 
-                payload: {
-                    ...values,
-                    env_id: values.env_id.id,
-                    type: values.type.value,
-                    scope: values.scope.value
-                }
+            updateWidgets({
+                ...values,
+                env_id: values.env_id.id,
+                type: values.type.value,
+                scope: values.scope.value
             });
             setNotification({
                 title: 'Successfully saved!',
-                message: 'Widget has been added.'
+                message: 'Widgets have been updated.'
             });
             handleClearForm();
         }
@@ -82,11 +84,8 @@ export default function ManageWidget() {
         setOpen(true);
     }
 
-    const handleDeleteWidget = (key: string) => {
-        dispatch({
-            type: 'widget/delete',
-            payload: key
-        });
+    const handleDeleteWidget = (id: string) => {
+        deleteWidget(id);
         setNotification({
             title: 'Successfully deleted!',
             message: 'Widget has been deleted.'
@@ -94,14 +93,30 @@ export default function ManageWidget() {
         handleClearForm();
     }
 
-    const toggleWidgetVisibility = (key: string, visible: boolean) => {
-        dispatch({
-            type: 'widget/visibility',
-            payload: {
-                key, visible
-            }
+    const toggleWidgetVisibility = (id: string, enabled: boolean) => {
+        updateWidgets({
+            ...widgets[id],
+            enabled: !enabled
         });
     }
+
+    const filterWidgets = () => {
+        let list: Widget[] = Object.values(widgets);
+
+        if (filterEnv !== 'all') {
+            list = list.filter(widget => widget.env_id === filterEnv);
+        }
+
+        if (filterType !== 'all') {
+            list = list.filter(widget => widget.type === filterType);
+        }
+
+        if (filterVisible !== 'all') {
+            list = list.filter(widget => filterVisible === "true" ? widget.enabled : !widget.enabled);
+        }
+
+        return list;
+    };
 
     return (
         <Fragment>
@@ -113,8 +128,25 @@ export default function ManageWidget() {
                     onClick={handleAddWidget}
                 />
                 <div className="-mx-4 mt-10 ring-1 ring-gray-spacer sm:-mx-6 md:mx-0 md:rounded-lg bg-white overflow-hidden shadow-md">
-                    <div>
-                        Filters here
+                    <div className="flex items-center justify-end border-b border-gray-spacer p-2 space-x-3">
+                        <Select value={filterEnv} onChange={e => setFilterEnv(e.currentTarget.value)}>
+                            <option value="all">All Environments</option>
+                            {Object.values(envs).map(env => (
+                                <option key={env.id} value={env.id}>{env.name}</option>
+                            ))}
+                        </Select>
+                        <Select value={filterType} onChange={e => setFilterType(e.currentTarget.value)}>
+                            <option value="all">All Types</option>
+                            <option value={WidgetType.Action}>Action</option>
+                            <option value={WidgetType.Sendable}>Sendable</option>
+                            <option value={WidgetType.Standard}>Standard</option>
+                            <option value={WidgetType.Timeline}>Timeline</option>
+                        </Select>
+                        <Select value={filterVisible} onChange={e => setFilterVisible(e.currentTarget.value)}>
+                            <option value="all">All Visibility</option>
+                            <option value="true">Enabled</option>
+                            <option value="false">Disabled</option>
+                        </Select>
                     </div>
                     <table className="min-w-full divide-y divide-gray-spacer">
                         <thead>
@@ -140,8 +172,8 @@ export default function ManageWidget() {
                             </tr>
                         </thead>
                         <tbody>
-                            {Object.keys(widgets).map((key, index) => (
-                                <tr key={key}>
+                            {filterWidgets().map((widget: Widget, index) => (
+                                <tr key={widget.id}>
                                     <td
                                         className={classNames(
                                             index === 0 ? '' : 'border-t border-transparent',
@@ -149,8 +181,8 @@ export default function ManageWidget() {
                                         )}
                                     >
                                         <div className="font-medium text-gray-default">
-                                            {widgets[key].name}<br />
-                                            <span className="text-sm font-normal text-gray-500">{widgets[key].url}</span>
+                                            {widget.name}<br />
+                                            <span className="text-sm font-normal text-gray-500">{widget.url}</span>
                                         </div>
                                         {index !== 0 ? <div className="absolute right-0 left-6 -top-px h-px bg-gray-spacer" /> : null}
                                     </td>
@@ -160,7 +192,7 @@ export default function ManageWidget() {
                                             'hidden px-3 py-3.5 text-sm text-gray-500 lg:table-cell'
                                         )}
                                     >
-                                        {getEnv(widgets[key].env_id, envList)?.label ?? 'Unknown'}
+                                        {getEnv(widget.env_id, envList)?.label ?? 'Unknown'}
                                     </td>
                                     <td
                                         className={classNames(
@@ -168,7 +200,7 @@ export default function ManageWidget() {
                                             'hidden px-3 py-3.5 text-sm text-gray-500 lg:table-cell'
                                         )}
                                     >
-                                        {widgets[key].type}
+                                        {widget.type}
                                     </td>
                                     <td
                                         className={classNames(
@@ -178,21 +210,21 @@ export default function ManageWidget() {
                                     >
                                         <button
                                             type="button"
-                                            onClick={() => toggleWidgetVisibility(key, widgets[key].enabled)}
+                                            onClick={() => toggleWidgetVisibility(widget.id, widget.enabled)}
                                             className="inline-flex items-center rounded-md border border-gray-spacer bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-default shadow-sm hover:bg-gray-hover focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-30"
                                         >
-                                            {widgets[key].enabled ? 'Disable' : 'Enable'}<span className="sr-only"></span>
+                                            {widget.enabled ? 'Disable' : 'Enable'}<span className="sr-only"></span>
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => handleEditWidget(key)}
+                                            onClick={() => handleEditWidget(widget.id)}
                                             className="inline-flex items-center rounded-md border border-gray-spacer bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-default shadow-sm hover:bg-gray-hover focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-30"
                                         >
                                             Edit<span className="sr-only"></span>
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => handleDeleteWidget(key)}
+                                            onClick={() => handleDeleteWidget(widget.id)}
                                             className="inline-flex items-center rounded-md border border-gray-spacer bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-default shadow-sm hover:bg-gray-hover focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-30"
                                         >
                                             Delete<span className="sr-only"></span>

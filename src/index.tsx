@@ -4,7 +4,12 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import './index.css';
 import ContainerProvider from './providers/ContainerProvider';
-import StorageProvider from './providers/StorageProvider';
+import { ContainerClient } from '@statflo/textkit-widget-events';
+import { LogProvider } from './providers/LogProvider';
+import ContactProvider from './providers/ContactProvider';
+import WidgetProvider from './providers/WidgetProvider';
+
+export const containerClient = new ContainerClient({ window });
 
 const container = document.getElementById('root')!;
 const root = createRoot(container);
@@ -18,11 +23,15 @@ declare global {
 
 root.render(
   <React.StrictMode>
-    <ContainerProvider>
-      <StorageProvider>
-        <App />
-      </StorageProvider>
-    </ContainerProvider>
+    <LogProvider>
+      <ContactProvider>
+        <ContainerProvider>
+          <WidgetProvider>
+            <App />
+          </WidgetProvider>
+        </ContainerProvider>
+      </ContactProvider>
+    </LogProvider>
   </React.StrictMode>
 );
 

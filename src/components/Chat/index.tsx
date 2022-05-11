@@ -8,20 +8,29 @@ import SearchIcon from "../../icons/SearchIcon";
 import ToContactIcon from "../../icons/ToContactIcon";
 import ChatItem from "../ChatItem";
 import { useContainer } from '../../providers/ContainerProvider';
-import { useStorage } from "../../providers/StorageProvider";
-import { EventNames, WidgetState, WidgetType, WidgetViewSize } from "@statflo/textkit-widget-events";
+import { EventNames, WidgetScope, WidgetState, WidgetType, WidgetViewSize } from "@statflo/textkit-widget-events";
+import { containerClient } from "../..";
+import { useContacts } from "../../providers/ContactProvider";
+import { Contact, Widget } from "../../types";
+import { useLogger } from "../../providers/LogProvider";
+import { createLog } from '../../utils/logs';
+import classNames from "../../utils/classnames";
+import { useWidgets } from "../../providers/WidgetProvider";
+import { getWidgetMaxHeight } from "../../utils/widgets";
 
 export default function Chat() {
-    const { contact, setContact, client } = useContainer();
+    const { addSentLog } = useLogger();
+    const { contacts } = useContacts();
+    const { activeWidgets, addWidget, state } = useWidgets();
+    const { contact, setContact } = useContainer();
     const [query, setQuery] = useState<string>('');
-    const { contacts, enabledWidgets } = useStorage();
 
     const filter = () => {
         if (query.length === 0) {
-            return Object.values(contacts);
+            return contacts;
         }
 
-        return Object.values(contacts).filter(
+        return contacts.filter(
             contact => (contact.tag) ? (
                 contact.name.toLowerCase().includes(query.toLowerCase()) ||
                 contact.external.toLowerCase().includes(query.toLowerCase()) ||
@@ -33,30 +42,56 @@ export default function Chat() {
         );
     }
 
-    const changeContact = (id: string) => {
-        setContact(id);
-        enabledWidgets.forEach(widget => {
-            client.post(widget.id, EventNames.container.activeConversationChanged, {
-                externalId: contacts[id].external,
+    const changeContact = (contact: Contact) => {
+        setContact(contact);
+        activeWidgets.forEach((widget: Widget) => {
+            const meta = {
+                externalId: contact.external,
                 metadata: {}
-            });
-            console.log('createLog for this activeConversationChanged event');
-            const state = client.states.get(widget.id);
-            if (widget.type === WidgetType.Standard && state.size === WidgetViewSize.Large) {
-                client.setState(widget.id, WidgetState.size, WidgetViewSize.Medium);
-                console.log('createLog for widgetSize change');
+            };
+
+            if (widget.scope === WidgetScope.Conversation) {
+                containerClient.post(widget.id, EventNames.container.activeConversationChanged, meta);
+                addSentLog([
+                    createLog(widget.id, EventNames.container.activeConversationChanged, meta)
+                ]);
+            }
+
+            if (state[widget.id].type === WidgetType.Standard && state[widget.id].size === WidgetViewSize.Large) {
+                containerClient.setState(widget.id, WidgetState.size, WidgetViewSize.Medium);
+                addSentLog([
+                    createLog(widget.id, WidgetState.size, WidgetViewSize.Medium)
+                ]);
             }
         });
+    }
+
+    const handleOpenAddWidget = () => {
+        if (!addWidget) return;
+
+        const maxHeight = getWidgetMaxHeight();
+        containerClient.setState(addWidget.id, WidgetState.isOpen, true);
+        containerClient.setState(addWidget.id, WidgetState.maxHeight, maxHeight)
+        addSentLog([
+            createLog(addWidget.id, WidgetState.isOpen, true),
+            createLog(addWidget.id, WidgetState.maxHeight, maxHeight)
+        ]);
     }
 
     return (
         <aside className="flex flex-col w-[350px] border-r border-gray-spacer box-border bg-white">
             <div className="flex items-center px-4 py-4">
                 <h2 className="font-semibold text-2xl flex-1">Chats</h2>
-                <div className="flex items-center justify-center w-10 h-6 cursor-pointer">
-                    <PlusIcon className="w-5 h-5 text-primary-default opacity-20" />
+                <div
+                    className={classNames(
+                        'flex items-center justify-center w-10 h-6 text-primary-default',
+                        addWidget ? 'cursor-pointer' : 'opacity-20 cursor-default'
+                    )}
+                    onClick={handleOpenAddWidget}
+                >
+                    <PlusIcon className="w-5 h-5" />
                 </div>
-                <div className="flex items-center justify-center w-10 h-6 cursor-pointer">
+                <div className="flex items-center justify-center w-10 h-6 cursor-default">
                     <FilterIcon className="w-5 h-5 text-primary-default" />
                 </div>
             </div>
@@ -94,12 +129,12 @@ export default function Chat() {
                 {filter().map(item => (
                     <ChatItem 
                         id={item.id}
-                        active={contact === item.id}
+                        active={contact?.id === item.id}
                         key={item.id}
                         title={item.name}
                         tag={item.tag}
                         external={item.external}
-                        onClick={changeContact}
+                        onClick={() => changeContact(item)}
                     />
                 ))}
             </div>

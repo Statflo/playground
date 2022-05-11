@@ -7,12 +7,12 @@ interface ChatItemProps {
     id: string;
     tag?: string;
     title: string;
-    onClick: (id: string) => void;
+    onClick: VoidFunction;
 }
 
 export default function ChatItem({ active = false, external, id, tag, title, onClick }: ChatItemProps) {
     return (
-        <div onClick={() => onClick(id)} className={classNames(
+        <div onClick={onClick} className={classNames(
             'group flex w-full pl-4 cursor-pointer h-24 hover:bg-gray-hover hover:text-main-default',
             active ? 'bg-primary-default text-white' : 'text-main-default'
         )}>

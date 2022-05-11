@@ -1,11 +1,11 @@
 import { Menu, Transition } from "@headlessui/react";
 import { Fragment } from "react";
 import { useContainer } from "../../providers/ContainerProvider";
-import { useStorage } from "../../providers/StorageProvider";
+import { useWidgets } from "../../providers/WidgetProvider";
 
 export default function EnvSelector() {
     const { env, setEnv } = useContainer();
-    const { envs } = useStorage();
+    const { envs } = useWidgets();
 
     return (
         <div className="relative">

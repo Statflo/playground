@@ -6,12 +6,13 @@ import Modal from "../components/Modal";
 import PageTitle from "../components/PageTitle";
 import classNames from "../utils/classnames";
 import { useContainer } from '../providers/ContainerProvider';
-import { useStorage } from "../providers/StorageProvider";
+import { useContacts } from "../providers/ContactProvider";
+import { Contact } from "../types";
 
 export default function ManageContact() {
     const [open, setOpen] = useState<boolean>(false);
     const { contact, setContact, setNotification } = useContainer();
-    const { dispatch, contacts } = useStorage();
+    const { contacts, updateContacts, deleteContact } = useContacts();
     const form = useFormik({
         initialValues: {
             id: '',
@@ -20,10 +21,7 @@ export default function ManageContact() {
             tag: '',
         },
         onSubmit: payload => {
-            dispatch({
-                type: 'contact/register',
-                payload
-            });
+            updateContacts(payload);
             setNotification({
                 title: 'Successfully saved!',
                 message: 'Contact has been added.'
@@ -43,26 +41,23 @@ export default function ManageContact() {
         form.resetForm();
     }
 
-    const handleEditContact = (key: string) => {
-        form.setFieldValue('id', contacts[key].id);
-        form.setFieldValue('name', contacts[key].name);
-        form.setFieldValue('external', contacts[key].external);
-        form.setFieldValue('tag', contacts[key].tag);
+    const handleEditContact = (contact: Contact) => {
+        form.setFieldValue('id', contact.id);
+        form.setFieldValue('name', contact.name);
+        form.setFieldValue('external', contact.external);
+        form.setFieldValue('tag', contact.tag);
         setOpen(true);
     }
 
-    const handleDeleteContact = (payload: string) => {
-        dispatch({
-            type: 'widget/delete',
-            payload
-        });
+    const handleDeleteContact = (id: string) => {
+        deleteContact(id);
         setNotification({
             title: 'Successfully deleted!',
             message: 'Contact has been deleted.'
         });
         handleClearForm();
 
-        if (payload === contact) {
+        if (contact && id === contact.id) {
             setContact(undefined);
         }
     }
@@ -95,8 +90,8 @@ export default function ManageContact() {
                             </tr>
                         </thead>
                         <tbody>
-                            {Object.keys(contacts).map((key, index) => (
-                                <tr key={key}>
+                            {contacts.map((contact, index) => (
+                                <tr key={contact.id}>
                                     <td
                                         className={classNames(
                                             index === 0 ? '' : 'border-t border-transparent',
@@ -104,7 +99,7 @@ export default function ManageContact() {
                                         )}
                                     >
                                         <div className="font-medium text-gray-default">
-                                            {contacts[key].name}
+                                            {contact.name}
                                         </div>
                                         {index !== 0 ? <div className="absolute right-0 left-6 -top-px h-px bg-gray-spacer" /> : null}
                                     </td>
@@ -114,7 +109,7 @@ export default function ManageContact() {
                                             'hidden px-3 py-3.5 text-sm text-gray-500 lg:table-cell'
                                         )}
                                     >
-                                        {contacts[key].external}
+                                        {contact.external}
                                     </td>
                                     <td
                                         className={classNames(
@@ -122,7 +117,7 @@ export default function ManageContact() {
                                             'hidden px-3 py-3.5 text-sm text-gray-500 lg:table-cell'
                                         )}
                                     >
-                                        {contacts[key].tag ? <Tag type="success">{contacts[key].tag}</Tag> : null}
+                                        {contact.tag ? <Tag type="success">{contact.tag}</Tag> : null}
                                     </td>
                                     <td
                                         className={classNames(
@@ -132,14 +127,14 @@ export default function ManageContact() {
                                     >
                                         <button
                                             type="button"
-                                            onClick={() => handleEditContact(key)}
+                                            onClick={() => handleEditContact(contact)}
                                             className="inline-flex items-center rounded-md border border-gray-spacer bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-default shadow-sm hover:bg-gray-hover focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-30"
                                         >
                                             Edit<span className="sr-only"></span>
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => handleDeleteContact(key)}
+                                            onClick={() => handleDeleteContact(contact.id)}
                                             className="inline-flex items-center rounded-md border border-gray-spacer bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-default shadow-sm hover:bg-gray-hover focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-30"
                                         >
                                             Delete<span className="sr-only"></span>

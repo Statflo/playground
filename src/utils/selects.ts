@@ -1,6 +1,6 @@
 import { DropdownOption } from "@statflo/textkit-ui-library";
 import { WidgetScope, WidgetType } from "@statflo/textkit-widget-events";
-import { EnvironmentState } from "../providers/StorageProvider";
+import { EnvironmentState } from "../types";
 
 export const typeOptions = [
     { id: '1', label: 'Action', value: WidgetType.Action },

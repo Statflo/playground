@@ -1,94 +1,11 @@
-import { createContext, useContext, useEffect, useMemo, useReducer } from "react";
+import { createContext, useContext, useEffect, useMemo, useReducer, useState } from "react";
 import { v4 as uuid } from "uuid";
 import { useContainer } from './ContainerProvider';
 import produce from "immer";
-import { WidgetScope, WidgetType, WidgetViewSize } from "@statflo/textkit-widget-events";
+import { WidgetViewSize } from "@statflo/textkit-widget-events";
 import { getActionWidgets, getEnvironmentWidgets, getSendableWidgets, getStandardWidgets, getTimelineWidget, getUserActionWidget } from "../utils/widgets";
-
-export type Environment = {
-    id: string;
-    name: string;
-}
-
-export type EnvironmentState = {
-    [key: string]: Environment
-}
-
-export type Contact = {
-    id: string;
-    name: string;
-    external: string;
-    tag?: string;
-}
-
-export type ContactState = {
-    [key: string]: Contact
-}
-
-export type Widget = {
-    id: string;
-    env_id: string | number;
-    name: string;
-    type: WidgetType;
-    scope: WidgetScope;
-    url: string;
-    domain: string;
-    order: number;
-    enabled: boolean;
-}
-
-export type WidgetState = {
-    [key: string]: Widget
-}
-
-export type PayloadActions = 
-    | { type: 'load', payload: StorageState }
-    | { type: 'env/register', payload: Environment }
-    | { type: 'env/delete', payload: string }
-    | { type: 'contact/register', payload: Contact }
-    | { type: 'contact/delete', payload: string }
-    | { type: 'widget/visibility', payload: { key: string, visible: boolean } }
-    | { type: 'widget/register', payload: Widget }
-    | { type: 'widget/delete', payload: string }
-
-export type StorageState = {
-    env: EnvironmentState;
-    contact: ContactState;
-    widget: WidgetState;
-    logs: {
-        sent: any[];
-        received: any[];
-    }
-}
-
-export type TWidgetState = {
-    footer: string | null;
-    header: string | null;
-    id: string;
-    isOpen: boolean;
-    isReady: boolean;
-    isShown: boolean;
-    label: string | null;
-    maxHeight: number;
-    size: WidgetViewSize;
-    type: WidgetType;
-    url: string;
-    widgetDomain: string;
-}
-
-export type StorageContextProps = {
-    state: StorageState;
-    envs: EnvironmentState;
-    contacts: ContactState;
-    widgets: WidgetState;
-    enabledWidgets: Widget[];
-    standard: Widget[];
-    timeline: Widget|null;
-    actions: Widget[];
-    add: Widget|null;
-    sendables: Widget[];
-    dispatch: React.Dispatch<PayloadActions>;
-}
+import { containerClient } from "..";
+import { PayloadActions, StorageContextProps, StorageState, Widget } from "../types";
 
 const reducer = produce((draft: StorageState, action: PayloadActions) => {
     switch(action.type) {
@@ -144,7 +61,8 @@ export function useStorage() {
 }
 
 export default function StorageProvider({ children }: { children: JSX.Element }) {
-    const { client, env, setEnv } = useContainer();
+    const { env, setEnv } = useContainer();
+    const [enabledWidgets, setEnabledWidgets] = useState<Widget[]>([]);
     const [state, dispatch] = useReducer(reducer, initialState);
     
     useEffect(() => {
@@ -159,11 +77,7 @@ export default function StorageProvider({ children }: { children: JSX.Element })
                 }
             },
             widget: {},
-            contact: {},
-            logs: {
-                sent: [],
-                received: []
-            }
+            contact: {}
         }
 
         if (!storage) {
@@ -191,19 +105,19 @@ export default function StorageProvider({ children }: { children: JSX.Element })
             'textkitPlaygroundConfig', 
             JSON.stringify(duplicateState)
         );
-    }, [state]);
 
-    const context: StorageContextProps = useMemo(() => {
-        const list = getEnvironmentWidgets(state.widget, env ?? '');
+        setEnabledWidgets(getEnvironmentWidgets(state.widget, env ?? ''));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [state, env]);
 
-        if (list.length > 0) {
-            list.forEach(widget => {
-                if (!client.states.get(widget.id)) {
+    useEffect(() => {
+        if (enabledWidgets.length > 0) {
+            enabledWidgets.forEach(widget => {
+                if (!containerClient.states.get(widget.id)) {
                     const { origin } = new URL(widget.url);
-                    const { origin: baseOrigin } = window.location;
 
-                    client.createWidget({
-                        containerDomain: baseOrigin,
+                    containerClient.createWidget({
+                        containerDomain: 'containerDomain',
                         footer: null,
                         header: null,
                         id: widget.id,
@@ -220,22 +134,24 @@ export default function StorageProvider({ children }: { children: JSX.Element })
                 }
             });
         }
+    }, [enabledWidgets]);
 
+    const context: StorageContextProps = useMemo(() => {
         return {
             state,
             envs: state.env,
             contacts: state.contact,
             widgets: state.widget,
-            enabledWidgets: list,
-            standard: getStandardWidgets(list),
-            timeline: getTimelineWidget(list),
-            actions: getActionWidgets(list),
-            add: getUserActionWidget(list),
-            sendables: getSendableWidgets(list),
+            enabledWidgets: enabledWidgets,
+            standard: getStandardWidgets(enabledWidgets),
+            timeline: getTimelineWidget(enabledWidgets),
+            actions: getActionWidgets(enabledWidgets),
+            add: getUserActionWidget(enabledWidgets),
+            sendables: getSendableWidgets(enabledWidgets),
             dispatch
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state, dispatch, env]);
+    }, [state, dispatch, env, enabledWidgets]);
 
     return (
         <StorageContext.Provider value={context}>

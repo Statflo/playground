@@ -1,20 +1,26 @@
 import { WidgetState, WidgetViewSize } from "@statflo/textkit-widget-events";
 import IframeResizer from "iframe-resizer-react";
-import { useContainer } from '../../providers/ContainerProvider';
 import classNames from "../../utils/classnames";
 import ArrowRightIcon from "../../icons/ArrowRightIcon";
-import { TWidgetState } from "../../providers/StorageProvider";
+import { containerClient } from "../..";
+import { WidgetPropertyState } from "../../types";
+import { useLogger } from "../../providers/LogProvider";
+import { createLog } from '../../utils/logs';
+import { getWidgetMaxHeight } from "../../utils/widgets";
 
 interface StandardWidgetProps {
     visible: boolean;
-    widget: TWidgetState;
+    widget: WidgetPropertyState;
 }
 
 export default function StandardWidget({ visible, widget }: StandardWidgetProps) {
-    const { client } = useContainer();
+    const { addSentLog } = useLogger();
 
     const handleFooterClick = () => {
-        client.setState(widget.id, WidgetState.size, WidgetViewSize.Large);
+        containerClient.setState(widget.id, WidgetState.size, WidgetViewSize.Large);
+        addSentLog([
+            createLog(widget.id, WidgetState.size, WidgetViewSize.Large)
+        ]);
     }
 
     const handleHeaderClick = () => {
@@ -22,12 +28,16 @@ export default function StandardWidget({ visible, widget }: StandardWidgetProps)
             return;
         }
 
-        const height: number = window.innerHeight;
-        let containerHeight: number = 0;
-        containerHeight = height - 60 - 44;
+        const newSize = widget.size === WidgetViewSize.Medium ? WidgetViewSize.Small : WidgetViewSize.Medium;
+        const maxHeight = getWidgetMaxHeight();
 
-        client.setState(widget.id, WidgetState.size, widget.size === WidgetViewSize.Medium ? WidgetViewSize.Small : WidgetViewSize.Medium);
-        client.setState(widget.id, WidgetState.maxHeight, containerHeight);
+        containerClient.setState(widget.id, WidgetState.size, newSize);
+        containerClient.setState(widget.id, WidgetState.maxHeight, maxHeight);
+
+        addSentLog([
+            createLog(widget.id, WidgetState.size, newSize),
+            createLog(widget.id, WidgetState.maxHeight, maxHeight)
+        ]);
     }
 
     return (

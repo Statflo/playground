@@ -6,25 +6,22 @@ import { useContainer } from '../providers/ContainerProvider';
 import Modal from '../components/Modal';
 import PageTitle from '../components/PageTitle';
 import classNames from '../utils/classnames';
-import { useStorage } from '../providers/StorageProvider';
+import { useWidgets } from '../providers/WidgetProvider';
 
 export default function ManageEnv() {
     const [open, setOpen] = useState<boolean>(false);
     const { env, setEnv, setNotification } = useContainer();
-    const { envs, dispatch } = useStorage();
+    const { envs, updateEnvironments, deleteEnvironment } = useWidgets();
     const form = useFormik({
         initialValues: {
             id: '',
             name: '',
         },
         onSubmit: payload => {
-            dispatch({
-                type: 'env/register',
-                payload
-            });
+            updateEnvironments(payload);
             setNotification({
                 title: 'Successfully saved!',
-                message: 'Environment has been created.'
+                message: 'Environments have been updated.'
             });
             handleClearForm();
         }
@@ -47,18 +44,15 @@ export default function ManageEnv() {
         setOpen(true);
     }
 
-    const handleDeleteEnv = (payload: string) => {
-        dispatch({
-            type: 'env/delete',
-            payload
-        });
+    const handleDeleteEnv = (id: string) => {
+        deleteEnvironment(id);
         setNotification({
             title: 'Successfully deleted!',
             message: 'Environment and all widgets have been deleted.'
         });
 
-        if (env === payload) {
-            const result = Object.keys(envs).filter(val => val !== payload);
+        if (env === id) {
+            const result = Object.keys(envs).filter(val => val !== id);
             setEnv(
                 (result.length > 0) ? result[0] : undefined
             );

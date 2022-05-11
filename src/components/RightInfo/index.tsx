@@ -3,16 +3,14 @@ import MessageBubbleIcon from "../../icons/MessageBubbleIcon";
 import PhoneIcon from "../../icons/PhoneIcon";
 import PinIcon from "../../icons/PinIcon";
 import { useContainer } from '../../providers/ContainerProvider';
-import { useStorage } from "../../providers/StorageProvider";
 
 export default function RightInfo() {
     const { tab, setTab, contact } = useContainer();
-    const { contacts } = useStorage();
 
     return (
         <div id="right-info-container" className="w-full bg-white pt-6 pb-2 border-b border-gray-spacer">
             <h2 className="w-full font-bold text-xl text-main-default text-center mb-4 select-none">
-                {contact ? contacts[contact].name : `No user selected`}
+                {contact?.name ?? `No user selected`}
             </h2>
             <div className="flex items-center text-main-l3 px-4 py-2">
                 <PinIcon className="w-5 h-5" />
