@@ -6,4 +6,4 @@ runs:
     - name: Install Dependencies
       shell: bash
       run: |
-        yarn ci:install
+        yarn install
