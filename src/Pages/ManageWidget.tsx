@@ -10,7 +10,7 @@ import classNames from "../utils/classnames";
 import { getEnv, getEnvList, scopeOptions, typeOptions } from '../utils/selects';
 import { useWidgets } from "../providers/WidgetProvider";
 import Select from "../components/Select";
-import { Widget, WidgetState } from "../types";
+import { Widget } from "../types";
 
 export default function ManageWidget() {
     const [open, setOpen] = useState<boolean>(false);
