@@ -1,4 +1,4 @@
-import { Helpers, WidgetType, WidgetViewSize, WidgetState as TKWidgetState } from "@statflo/textkit-widget-events";
+import { Helpers, WidgetType, WidgetState as TKWidgetState } from "@statflo/textkit-widget-events";
 import React, { createContext, useContext, useEffect, useMemo, useReducer, useState } from "react";
 import { containerClient } from "..";
 import { Environment, EnvironmentState, Widget, WidgetPayloadActions, WidgetProviderState, WidgetReducerState, WidgetState } from "../types";
