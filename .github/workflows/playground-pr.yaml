@@ -1,8 +1,8 @@
-name: ui-login
+name: playground-pr
 
 on:
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
     paths:
       - '**'
   push:
