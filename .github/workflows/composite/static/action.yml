@@ -1,0 +1,113 @@
+name: 'static'
+author: 'statflodev'
+inputs:
+  package:
+    description: 'Define the package that will be built'
+    required: true
+    default: ''
+  environment:
+    description: 'Environment to build (leave blank to not deploy)'
+    required: false
+    default: ''
+  refName:
+    description: 'Define PR ref to build'     
+    required: true
+    default: 'master'
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        # pull/${{ github.event.pull_request.id }}/head
+        ref: ${{ github.event.inputs.refName }}
+    
+    #- name: Login to Amazon ECR
+    #  id: login-ecr
+    #  uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Get yarn cache directory path
+      id: yarn-cache-dir-path
+      run: |
+        cd ${{ github.event.inputs.package }}
+        echo "::set-output name=dir::$(yarn cache dir)"
+
+    - uses: actions/cache@v2
+      id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
+      with:
+        path: ${{ github.event.inputs.package }}/node_modules
+        key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+
+    - name: Get Build Properties
+      run: |
+        file="./${{ github.event.inputs.package }}/build.properties"
+
+        if [ -f "$file" ] ; then
+          echo "build.properties found!"
+          while IFS='=' read -r key value
+          do
+            eval ${key}=\${value}
+          done < "$file"
+        fi
+
+        echo "DEPLOYABLE=$deployable" >> $GITHUB_ENV
+        echo "BUILDABLE=$buildable" >> $GITHUB_ENV
+        echo "TESTABLE=$testable" >> $GITHUB_ENV
+
+    - name: Dependency Install
+      if: steps.yarn-cache.outputs.cache-hit != 'true' 
+      run: |
+        cd ${{ github.event.inputs.package }}
+        yarn ci:install
+
+    - name: Tests
+      run: |
+        if [ "$TESTABLE" = true ] ; then
+          cd ${{ github.event.inputs.package }}
+          echo "Running frontend tests."
+          yarn ci:test
+        fi
+
+    - name: Build
+      if: ${{ env.buildable == 'true'}}
+      run: |
+        if [ "$BUILDABLE" = true ] ; then
+          cd ${{ github.event.inputs.package }}
+          echo "Running frontend build."
+          yarn ci:build
+        fi
+    
+    - name: Configure AWS credentials Dev
+      if: github.event.inputs.environment == 'dev'
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
+        aws-region: ca-central-1
+    
+    - name: Configure AWS credentials Prod
+      if: github.event.inputs.environment == 'prod'
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.PROD_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.PROD_AWS_SECRET_ACCESS_KEY }}
+        aws-region: ca-central-1
+
+    - name: Configure AWS credentials RC
+      if: github.event.inputs.environment == 'rc'
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.RC_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.RC_AWS_SECRET_ACCESS_KEY }}
+        aws-region: ca-central-1
+
+    - name: Deploy
+      if: github.event.inputs.environment != ''
+      run: |
+        if [ "$DEPLOYABLE" = true ] ; then
+          cd ${{ github.event.inputs.package }}
+          echo "Running frontend deploy."
+          yarn ci:deploy:${{ github.event.inputs.environment }}
+        fi

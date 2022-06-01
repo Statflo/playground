@@ -1,0 +1,9 @@
+name: 'read-build-properties'
+author: 'statflodev'
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Dependencies
+      shell: bash
+      run: |
+        yarn ci:install

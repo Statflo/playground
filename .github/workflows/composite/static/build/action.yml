@@ -1,0 +1,10 @@
+name: 'static-test'
+author: 'statflodev'
+runs:
+  using: 'composite'
+  steps:
+  - name: Run tests
+    shell: bash
+    run: |
+      echo "Running frontend build."
+      yarn ci:build
