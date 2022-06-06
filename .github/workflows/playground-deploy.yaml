@@ -50,6 +50,7 @@ jobs:
         uses: ./.github/workflows/composite/static/build
 
       - name: Configure AWS credentials Dev
+        if: ${{ ! github.event.inputs.force_prod_deploy }}
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_DEVELOPMENT }}
@@ -57,6 +58,7 @@ jobs:
           aws-region: ca-central-1
 
       - name: Deploy Dev
+        if: ${{ ! github.event.inputs.force_prod_deploy }}
         uses: reggionick/s3-deploy@v3
         with:
           folder: build
