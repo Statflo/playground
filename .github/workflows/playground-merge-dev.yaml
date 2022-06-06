@@ -76,7 +76,7 @@ jobs:
           aws-region: ca-central-1
 
       - name: Deploy Prod
-         if: ${{ github.event.inputs.force_prod_deploy }}
+        if: ${{ github.event.inputs.force_prod_deploy }}
         uses: reggionick/s3-deploy@v3
         with:
           folder: build
