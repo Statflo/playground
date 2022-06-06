@@ -12,7 +12,7 @@ on:
         default: false
 
 jobs:
-  merge:
+  deploy:
     runs-on: ubuntu-latest
     env:
       ENVIRONMENT: development
