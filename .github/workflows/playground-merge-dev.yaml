@@ -1,4 +1,4 @@
-name: playground-merge
+name: Merge Dev
 
 on:
   push:

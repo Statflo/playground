@@ -3,18 +3,10 @@ name: Workflow - Run (Manual)
 on:
   workflow_dispatch:
     inputs:
-      packages:
-        description: 'A space seperated list of packages to be built'
-        required: true
-        default: ''
-      environment:
-        description: 'Define env name (prod or dev)'     
-        required: true
-        default: 'dev'
       branch:
         description: 'Define branch name'     
         required: true
-        default: 'master'
+        default: 'main'
 
 jobs:
   build:
