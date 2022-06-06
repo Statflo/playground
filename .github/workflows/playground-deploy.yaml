@@ -6,10 +6,10 @@ on:
       - '**'
   workflow_dispatch:
     inputs:
-      environment:
-        description: 'Set to production to deploy production'     
-        required: true
-        default: 'development'
+      force_prod_deploy:
+        description: 'Production Deploy' 
+        type: boolean
+        default: false
 
 jobs:
   merge:
@@ -68,7 +68,7 @@ jobs:
           no-cache: false
 
       - name: Configure AWS credentials Prod
-        if: github.event.inputs.environment == 'production'
+        if: ${{ github.event.inputs.force_prod_deploy }}
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_PRODUCTION }}
@@ -76,7 +76,7 @@ jobs:
           aws-region: ca-central-1
 
       - name: Deploy Prod
-        if: github.event.inputs.environment == 'production'
+        if: ${{ github.event.inputs.force_prod_deploy }}
         uses: reggionick/s3-deploy@v3
         with:
           folder: build
