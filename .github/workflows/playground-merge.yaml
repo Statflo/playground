@@ -1,14 +1,15 @@
 name: playground-pr
 
 on:
-  pull_request:
-    branches: [ main ]
+  push:
     paths:
       - '**'
 
 jobs:
   pr:
     runs-on: ubuntu-latest
+    env:
+      ENVIRONMENT: development
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -41,3 +42,22 @@ jobs:
          
       - name: Build
         uses: ./.github/workflows/composite/static/build
+
+      - name: Configure AWS credentials Dev
+        if: github.event.inputs.environment == 'dev'
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_DEVELOPMENT }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEVELOPMENT }}
+          aws-region: ca-central-1
+
+      - name: Deploy Dev
+        uses: reggionick/s3-deploy@v3
+        with:
+          folder: build
+          bucket: ${{ secrets.S3_BUCKET_DEVELOPMENT }}
+          bucket-region: ${{ secrets.S3_BUCKET_REGION }}
+          dist-id: ${{ secrets.CF_DIST_ID_DEVELOPMENT }}
+          invalidation: /*
+          delete-removed: true
+          no-cache: false

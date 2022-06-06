@@ -3,8 +3,8 @@ author: 'statflodev'
 runs:
   using: 'composite'
   steps:
-  - name: Run tests
+  - name: Run Deploy
     shell: bash
     run: |
       echo "Running frontend build."
-      yarn ci:build
+      yarn deploy:${ENVIRONMENT}
